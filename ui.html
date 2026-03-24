@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Screen Explainer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Inter, -apple-system, sans-serif;
+    font-size: 13px;
+    background: #0f1117;
+    color: #e2e8f0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid #1e2433;
+  }
+  .header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+  .header p {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  /* ── API Key Section ── */
+  .api-section {
+    padding: 14px 20px;
+    border-bottom: 1px solid #1e2433;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .api-section input {
+    flex: 1;
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: #e2e8f0;
+    font-size: 12px;
+    outline: none;
+    font-family: monospace;
+  }
+  .api-section input:focus { border-color: #4f6ef7; }
+  .api-section input::placeholder { color: #4a5568; }
+
+  /* ── Mode Toggle ── */
+  .mode-toggle {
+    padding: 12px 20px;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #1e2433;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #2d3748;
+    background: transparent;
+    color: #64748b;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .mode-btn.active {
+    background: #4f6ef7;
+    border-color: #4f6ef7;
+    color: #fff;
+    font-weight: 500;
+  }
+
+  /* ── Main Body ── */
+  .body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+  }
+
+  /* ── Preview ── */
+  .preview-box {
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .preview-box.visible { display: block; }
+  .preview-label {
+    font-size: 10px;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .preview-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .preview-thumb {
+    width: 48px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #2d3748;
+  }
+  .preview-info { font-size: 12px; color: #a0aec0; }
+  .preview-info b { color: #e2e8f0; }
+
+  /* ── Analyze Button ── */
+  .analyze-btn {
+    width: 100%;
+    padding: 10px;
+    background: #4f6ef7;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 14px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .analyze-btn:hover { background: #3d5ce3; }
+  .analyze-btn:disabled { background: #2d3748; color: #4a5568; cursor: not-allowed; }
+
+  /* ── Spinner ── */
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Status ── */
+  .status {
+    font-size: 11px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .status.error { background: #2d1515; color: #fc8181; border: 1px solid #742a2a; display: block; }
+  .status.info  { background: #1a2535; color: #63b3ed; border: 1px solid #2a4365; display: block; }
+
+  /* ── Output ── */
+  .output-box {
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .output-box.visible { display: block; }
+  .output-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid #2d3748;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .output-header-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+  }
+  .tab-group { display: flex; gap: 4px; }
+  .tab {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid #2d3748;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+  }
+  .tab.active { background: #2d3748; color: #e2e8f0; }
+  .output-content {
+    padding: 14px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #a0aec0;
+    white-space: pre-wrap;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    padding: 12px 20px;
+    border-top: 1px solid #1e2433;
+    display: flex;
+    gap: 8px;
+  }
+  .copy-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 8px;
+    border: 1px solid #2d3748;
+    background: transparent;
+    color: #a0aec0;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .copy-btn:hover { background: #1a1f2e; color: #e2e8f0; }
+  .copy-btn.primary {
+    background: #14532d;
+    border-color: #166534;
+    color: #86efac;
+  }
+  .copy-btn.primary:hover { background: #166534; }
+  .copy-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .copy-btn.copied { background: #1a3a1a; color: #68d391; border-color: #276749; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>🧠 Screen Explainer</h1>
+  <p>Powered by Gemini 2.5 Flash · Select a frame → Get PM description + vibe coding prompt</p>
+</div>
+
+<!-- API Key -->
+<div class="api-section">
+  <input type="password" id="apiKey" placeholder="AIza... (Google AI Studio API key)" />
+</div>
+
+<!-- Mode Toggle -->
+<div class="mode-toggle">
+  <button class="mode-btn active" data-mode="both">Both in one click</button>
+  <button class="mode-btn" data-mode="pm">PM Description</button>
+  <button class="mode-btn" data-mode="prompt">Vibe Coding Prompt</button>
+</div>
+
+<!-- Body -->
+<div class="body">
+
+  <!-- Frame Preview -->
+  <div class="preview-box" id="previewBox">
+    <div class="preview-label">Selected Frame</div>
+    <div class="preview-meta">
+      <img class="preview-thumb" id="previewThumb" src="" alt="frame preview" />
+      <div class="preview-info">
+        <b id="previewName">—</b><br>
+        <span id="previewSize">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="status" id="status"></div>
+
+  <!-- Analyze Button -->
+  <button class="analyze-btn" id="analyzeBtn">
+    <div class="spinner" id="spinner"></div>
+    <span id="btnLabel">Explain This Screen</span>
+  </button>
+
+  <!-- Output -->
+  <div class="output-box" id="outputBox">
+    <div class="output-header">
+      <span class="output-header-label">Output</span>
+      <div class="tab-group" id="tabGroup">
+        <button class="tab active" data-tab="pm">PM View</button>
+        <button class="tab" data-tab="prompt">Prompt</button>
+      </div>
+    </div>
+    <div class="output-content" id="outputContent"></div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <button class="copy-btn primary" id="copyBothBtn" disabled>Copy Both to Clipboard</button>
+  <button class="copy-btn" id="copyPmBtn" disabled>Copy PM</button>
+  <button class="copy-btn" id="copyPromptBtn" disabled>Copy Prompt</button>
+</div>
+
+<script>
+  // ── State ──
+  let frameData = null;
+  let pmOutput = "";
+  let promptOutput = "";
+  let activeMode = "both";
+  let activeTab = "pm";
+
+  // ── Mode Toggle ──
+  document.querySelectorAll(".mode-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeMode = btn.dataset.mode;
+    });
+  });
+
+  // ── Tab Toggle ──
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      activeTab = tab.dataset.tab;
+      renderOutput();
+    });
+  });
+
+  function renderOutput() {
+    const el = document.getElementById("outputContent");
+    if (activeTab === "pm") el.textContent = pmOutput || "—";
+    else el.textContent = promptOutput || "—";
+  }
+
+  // ── Show / hide status ──
+  function showStatus(msg, type = "info") {
+    const el = document.getElementById("status");
+    el.textContent = msg;
+    el.className = "status " + type;
+  }
+  function clearStatus() {
+    const el = document.getElementById("status");
+    el.className = "status";
+    el.textContent = "";
+  }
+
+  // ── Loading state ──
+  function setLoading(on) {
+    const btn = document.getElementById("analyzeBtn");
+    const label = document.getElementById("btnLabel");
+    const spinner = document.getElementById("spinner");
+    btn.disabled = on;
+    spinner.style.display = on ? "block" : "none";
+    label.textContent = on ? "Analyzing…" : "Explain This Screen";
+  }
+
+  // ── Listen for messages from code.js ──
+  window.onmessage = async (event) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
+
+    if (msg.type === "error") {
+      showStatus(msg.message, "error");
+      setLoading(false);
+      return;
+    }
+
+    if (msg.type === "frameData") {
+      frameData = msg;
+
+      // Show preview
+      document.getElementById("previewThumb").src = "data:image/png;base64," + msg.imageBase64;
+      document.getElementById("previewName").textContent = msg.frameName;
+      document.getElementById("previewSize").textContent = `${msg.frameWidth} × ${msg.frameHeight}px`;
+      document.getElementById("previewBox").classList.add("visible");
+
+      clearStatus();
+      showStatus("Frame captured. Sending to Claude…", "info");
+
+      // Call Claude
+      await callClaude(msg);
+    }
+  };
+
+  // ── Analyze Button ──
+  document.getElementById("analyzeBtn").addEventListener("click", () => {
+    const apiKey = document.getElementById("apiKey").value.trim();
+    if (!apiKey) {
+      showStatus("Please enter your Google AI Studio API key first.", "error");
+      return;
+    }
+    clearStatus();
+    setLoading(true);
+    parent.postMessage({ pluginMessage: { type: "analyze" } }, "*");
+  });
+
+  // ── Gemini API Call ──
+  async function callClaude(data) {
+    const apiKey = document.getElementById("apiKey").value.trim();
+    const nodeTreeStr = JSON.stringify(data.nodeTree, null, 2);
+    const model = "gemini-2.5-flash";
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+    const pmSystemPrompt = `You are a senior Product Manager analyzing a Figma screen design.
+Your job is to describe the screen meticulously — as if briefing an engineer or vibe coding app with zero visual context.
+Cover: layout structure, every UI component (type, position, content, color, style), live vs static data, spacing, visual hierarchy, and any states or interactions implied by the design.
+Be precise. Use measurements. Call out placeholders. Flag design decisions that need clarification.
+Format your output with clear sections using === SECTION NAME === headers.`;
+
+    const promptSystemPrompt = `You are a senior Product Manager converting a Figma screen into a vibe coding prompt.
+Output a structured, copy-paste ready prompt that a vibe coding AI (like Cursor, Bolt, or Lovable) can use to build this screen.
+Include: screen overview, layout grid, every component with exact specs, colors, states, logic to implement, and open questions.
+Use ═══ dividers between sections. Be exhaustive. Treat placeholder values as TODO items.`;
+
+    const userText = `Frame name: "${data.frameName}"
+Frame size: ${data.frameWidth} × ${data.frameHeight}px
+
+Figma node tree:
+${nodeTreeStr}
+
+Please analyze this screen thoroughly.`;
+
+    try {
+      const modesToRun = activeMode === "both"
+        ? ["pm", "prompt"]
+        : [activeMode];
+
+      for (const mode of modesToRun) {
+        showStatus(`Generating ${mode === "pm" ? "PM description" : "vibe coding prompt"}…`, "info");
+
+        const body = {
+          system_instruction: {
+            parts: [{ text: mode === "pm" ? pmSystemPrompt : promptSystemPrompt }]
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  inline_data: {
+                    mime_type: "image/png",
+                    data: data.imageBase64,
+                  },
+                },
+                { text: userText },
+              ],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: 4096,
+            temperature: 0.4,
+          },
+        };
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(
+            err.error?.message || "API error " + response.status
+          );
+        }
+
+        const result = await response.json();
+        const text = result.candidates?.[0]?.content?.parts
+          ?.map((p) => p.text || "")
+          .join("") || "No output returned.";
+
+        if (mode === "pm") pmOutput = text;
+        else promptOutput = text;
+      }
+
+      // Show output
+      document.getElementById("outputBox").classList.add("visible");
+      renderOutput();
+
+      // Enable copy buttons
+      document.getElementById("copyBothBtn").disabled = false;
+      document.getElementById("copyPmBtn").disabled = false;
+      document.getElementById("copyPromptBtn").disabled = false;
+
+      clearStatus();
+      showStatus("Done! Output ready to copy.", "info");
+
+    } catch (err) {
+      showStatus("Error: " + err.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Copy Helpers ──
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = "✓ Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.classList.remove("copied");
+      }, 2000);
+    });
+  }
+
+  document.getElementById("copyBothBtn").addEventListener("click", () => {
+    const combined =
+      "=== PM DESCRIPTION ===\n\n" + pmOutput +
+      "\n\n\n=== VIBE CODING PROMPT ===\n\n" + promptOutput;
+    copyText(combined, document.getElementById("copyBothBtn"));
+  });
+
+  document.getElementById("copyPmBtn").addEventListener("click", () => {
+    copyText(pmOutput, document.getElementById("copyPmBtn"));
+  });
+
+  document.getElementById("copyPromptBtn").addEventListener("click", () => {
+    copyText(promptOutput, document.getElementById("copyPromptBtn"));
+  });
+
+  // ── Save API key to localStorage ──
+  const savedKey = localStorage.getItem("google_ai_key");
+  if (savedKey) document.getElementById("apiKey").value = savedKey;
+
+  document.getElementById("apiKey").addEventListener("input", (e) => {
+    localStorage.setItem("google_ai_key", e.target.value);
+  });
+</script>
+</body>
+</html>
