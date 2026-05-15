@@ -1,11 +1,16 @@
 # 🎨 Figma Screen → Prompt Plugin
 
+Live on Figma Plugin Community → <a href="https://www.figma.com/community/plugin/1621683104185173511" style="color:#2563eb; font-weight:600; text-decoration:none;">Try the Plugin</a>
+
+Built for builders rapidly prototyping with AI-powered vibe coding tools + Figma.
+
+---
+
 ## 🚀 Overview
 
 This plugin is built for builders who rapidly prototype using AI-powered “vibe coding” tools and Figma.
 
-It converts Figma screens into **structured prompts** that AI tools can understand — enabling a smoother transition from **design → generation → iteration**.
-
+It converts Figma screens into structured prompts that AI tools can understand — enabling a smoother transition from design → generation → iteration.
 ---
 
 ## 🎯 Problem
